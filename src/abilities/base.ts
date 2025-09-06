@@ -270,6 +270,17 @@ export abstract class Ability {
   abstract detach();
 
   /**
+   * Re-attaches event listeners after a connection is restored.
+   * This method detaches existing listeners and re-initializes them.
+   */
+  reattach() {
+    if (this._service !== null && this.isActive()) {
+      this.detach();
+      this.initialize();
+    }
+  }
+
+  /**
    * Removes all event listeners and all references to the platform accessory.
    * This method is called by the parent accessory every time it becomes inactive.
    * Note that this method doesn't remove the service from the platform accessory as it is assumed that

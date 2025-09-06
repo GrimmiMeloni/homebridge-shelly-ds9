@@ -269,6 +269,10 @@ export abstract class DeviceDelegate {
   protected handleConnect() {
     this.log.info('Device connected');
     this.connected = true;
+
+    // Re-attach event listeners for all accessories to restore state synchronization
+    this.reattach();
+    this.log.debug('Event listeners re-attached after reconnection');
   }
 
   /**
@@ -314,6 +318,16 @@ export abstract class DeviceDelegate {
     // invoke detach() on all accessories
     for (const a of this.accessories.values()) {
       a.detach();
+    }
+  }
+
+  /**
+   * Re-attaches event listeners for all accessories after a connection is restored.
+   */
+  reattach() {
+    // invoke reattach() on all accessories
+    for (const a of this.accessories.values()) {
+      a.reattach();
     }
   }
 

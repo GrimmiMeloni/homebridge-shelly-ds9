@@ -211,4 +211,22 @@ export class Accessory {
       }
     }
   }
+
+  /**
+   * Re-attaches event listeners for all abilities after a connection is restored.
+   */
+  reattach() {
+    // invoke reattach() on all abilities
+    for (const a of this.abilities) {
+      try {
+        a.reattach();
+      } catch (e) {
+        this.log.error('Failed to reattach ability:', e instanceof Error ? e.message : e);
+        this.log.debug('Accessory ID:', this.id);
+        if (e instanceof Error && e.stack) {
+          this.log.debug(e.stack);
+        }
+      }
+    }
+  }
 }
