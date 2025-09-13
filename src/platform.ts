@@ -184,6 +184,10 @@ export class ShellyPlatform implements DynamicPlatformPlugin {
 
     this.deviceCache = new DeviceCache(api.user.storagePath(), log);
 
+    // Startup message to confirm the state sync fix is loaded
+    this.log.warn('🔧 RUNNING CUSTOM FORK: homebridge-shelly-ds9 with state synchronization fixes');
+    this.log.warn('🔧 Branch: fix/state-sync-after-reconnect from GrimmiMeloni/homebridge-shelly-ds9');
+
     // wait for homebridge to finish launching
     api.on('didFinishLaunching', this.initialize.bind(this));
   }
