@@ -267,12 +267,18 @@ export abstract class DeviceDelegate {
    * Handles 'connect' events from the RPC handler.
    */
   protected handleConnect() {
+    const wasDisconnected = !this.connected;
     this.log.info('Device connected');
     this.connected = true;
 
     // Re-attach event listeners for all accessories to restore state synchronization
-    this.reattach();
-    this.log.debug('Event listeners re-attached after reconnection');
+    if (wasDisconnected) {
+      this.log.info('Re-attaching event listeners after reconnection');
+      this.reattach();
+      this.log.info('Event listeners re-attached successfully');
+    } else {
+      this.log.debug('Device connect event (was already connected)');
+    }
   }
 
   /**

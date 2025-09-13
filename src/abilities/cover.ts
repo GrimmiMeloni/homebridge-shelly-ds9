@@ -66,6 +66,8 @@ export class CoverAbility extends Ability {
       return;
     }
 
+    this.log.debug(`Initializing cover ${this.component.id} event listeners`);
+
     // set the initial values
     this.service
       .setCharacteristic(this.Characteristic.PositionState, this.positionState)
@@ -88,6 +90,8 @@ export class CoverAbility extends Ability {
       .on("change:state", this.stateChangeHandler, this)
       .on("change:current_pos", this.currentPosChangeHandler, this)
       .on("change:target_pos", this.targetPosChangeHandler, this);
+
+    this.log.debug(`Cover ${this.component.id} event listeners attached`);
   }
 
   detach() {
@@ -164,6 +168,10 @@ export class CoverAbility extends Ability {
 
     // Shelly does not update the target position when it is triggered with a physical switch.
     // If we don't change the target position, HomeKit waits for the original position forever.
+    // Always sync target to current position.
+    this.log.debug(
+      `Cover ${this.component.id} syncing target position to current (${this.currentPosition})`
+    );
     this.service
       .getCharacteristic(this.Characteristic.TargetPosition)
       .updateValue(this.currentPosition);
