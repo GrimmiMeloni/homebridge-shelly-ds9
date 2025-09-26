@@ -4,12 +4,12 @@ import {
   PlatformAccessory,
   Service,
   WithUUID,
-} from "homebridge";
+} from 'homebridge';
 
-import { CustomCharacteristics } from "../utils/characteristics";
-import { CustomServices } from "../utils/services";
-import { DeviceLogger } from "../utils/device-logger";
-import { ShellyPlatform } from "../platform";
+import { CustomCharacteristics } from '../utils/characteristics';
+import { CustomServices } from '../utils/services';
+import { DeviceLogger } from '../utils/device-logger';
+import { ShellyPlatform } from '../platform';
 
 export type ServiceClass = WithUUID<typeof Service>;
 
@@ -25,7 +25,7 @@ export abstract class Ability {
    */
   get platformAccessory(): PlatformAccessory {
     if (this._platformAccessory === null) {
-      throw new Error("Ability has not yet been setup");
+      throw new Error('Ability has not yet been setup');
     }
     return this._platformAccessory;
   }
@@ -37,7 +37,7 @@ export abstract class Ability {
    */
   protected get platform(): ShellyPlatform {
     if (this._platform === null) {
-      throw new Error("Ability has not yet been setup");
+      throw new Error('Ability has not yet been setup');
     }
     return this._platform;
   }
@@ -84,7 +84,7 @@ export abstract class Ability {
    */
   protected get log(): DeviceLogger {
     if (this._log === null) {
-      throw new Error("Ability has not yet been setup");
+      throw new Error('Ability has not yet been setup');
     }
     return this._log;
   }
@@ -96,7 +96,7 @@ export abstract class Ability {
    */
   protected get service(): Service {
     if (this._service === null) {
-      throw new Error("Ability has not yet been setup");
+      throw new Error('Ability has not yet been setup');
     }
     return this._service;
   }
@@ -126,7 +126,7 @@ export abstract class Ability {
    */
   constructor(
     protected readonly serviceName?: string,
-    protected readonly serviceSubtype?: string
+    protected readonly serviceSubtype?: string,
   ) {}
 
   /**
@@ -139,7 +139,7 @@ export abstract class Ability {
   setup(
     platformAccessory: PlatformAccessory,
     platform: ShellyPlatform,
-    log: DeviceLogger
+    log: DeviceLogger,
   ) {
     this._platformAccessory = platformAccessory;
     this._platform = platform;
@@ -207,7 +207,7 @@ export abstract class Ability {
         this.platformAccessory.addService(
           this.serviceClass,
           this.serviceName,
-          this.serviceSubtype
+          this.serviceSubtype,
         );
     } else {
       service = this.platformAccessory.getService(this.serviceClass);
@@ -243,7 +243,7 @@ export abstract class Ability {
    */
   protected removeCharacteristic(
     characteristic: WithUUID<new () => Characteristic> &
-      WithUUID<typeof Characteristic>
+      WithUUID<typeof Characteristic>,
   ) {
     const s = this.service;
 
