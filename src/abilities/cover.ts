@@ -151,6 +151,20 @@ export class CoverAbility extends Ability {
       },
     );
     this.updateStates();
+
+    // When cover stops moving, sync target position to current position
+    // This ensures HomeKit state consistency even if currentPosChangeHandler didn't fire
+    if (this.positionState === this.Characteristic.PositionState.STOPPED) {
+      // Only sync if target and current positions are different
+      if (this.targetPosition !== this.currentPosition) {
+        this.log.debug(
+          `Cover ${this.component.id} stopped - syncing target position to current (${this.currentPosition})`,
+        );
+        this.service
+          .getCharacteristic(this.Characteristic.TargetPosition)
+          .updateValue(this.currentPosition);
+      }
+    }
   }
 
   /**
