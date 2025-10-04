@@ -11,6 +11,12 @@ const names = {
 
 export class CoverAbility extends Ability {
   /**
+   * Tracks the target position that we've synced to HomeKit.
+   * This may differ from component.target_pos when physical switches are used.
+   */
+  private syncedTargetPosition: number | null = null;
+
+  /**
    * @param component - The cover component to control.
    * @param type - The type of cover.
    */
@@ -54,8 +60,14 @@ export class CoverAbility extends Ability {
 
   /**
    * The target position that the cover is moving towards.
+   * Returns our synced target if available, otherwise falls back to device's target_pos.
    */
   protected get targetPosition(): number {
+    // If we've synced a target position to HomeKit, use that
+    if (this.syncedTargetPosition !== null) {
+      return this.syncedTargetPosition;
+    }
+    // Otherwise use device's target_pos
     return this.component.target_pos ?? this.currentPosition;
   }
 
@@ -124,6 +136,9 @@ export class CoverAbility extends Ability {
    * Handles changes to the TargetPosition characteristic.
    */
   protected async targetPositionSetHandler(value: CharacteristicValue) {
+    // Clear our synced target position since HomeKit is setting a new one
+    this.syncedTargetPosition = null;
+
     if (value === this.component.target_pos) {
       return;
     }
@@ -160,6 +175,7 @@ export class CoverAbility extends Ability {
         this.log.debug(
           `Cover ${this.component.id} stopped - syncing target position to current (${this.currentPosition})`,
         );
+        this.syncedTargetPosition = this.currentPosition;
         this.service
           .getCharacteristic(this.Characteristic.TargetPosition)
           .updateValue(this.currentPosition);
@@ -201,10 +217,11 @@ export class CoverAbility extends Ability {
 
     // Shelly does not update the target position when it is triggered with a physical switch.
     // If we don't change the target position, HomeKit waits for the original position forever.
-    // Always sync target to current position.
+    // Always sync target to current position and remember it.
     this.log.debug(
       `Cover ${this.component.id} syncing target position to current (${this.currentPosition})`,
     );
+    this.syncedTargetPosition = this.currentPosition;
     this.service
       .getCharacteristic(this.Characteristic.TargetPosition)
       .updateValue(this.currentPosition);
@@ -214,6 +231,9 @@ export class CoverAbility extends Ability {
    * Handles changes to the `target_pos` property.
    */
   protected targetPosChangeHandler() {
+    // Clear synced target since device now has a real target
+    this.syncedTargetPosition = null;
+
     this.log.debug(
       `${this.component.id} target position changed to ${this.targetPosition}`,
       {
