@@ -73,7 +73,7 @@ export class OutletAbility extends Ability {
     }else{
       this.log.info('Switch Status('+this.component.id+'): off');
     }
-    
+
     this.service.getCharacteristic(this.Characteristic.On)
       .updateValue(value as boolean);
   }

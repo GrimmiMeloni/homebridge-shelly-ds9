@@ -1,6 +1,6 @@
-import { ShellyGen32Pm, ShellyPlus2Pm, ShellyPlus2PmRev1 } from "shellies-ds9";
+import { ShellyGen32Pm, ShellyPlus2Pm, ShellyPlus2PmRev1 } from 'shellies-ds9';
 
-import { DeviceDelegate } from "./base";
+import { DeviceDelegate } from './base';
 
 /**
  * Handles Shelly Plus 2 PM devices.
@@ -8,7 +8,7 @@ import { DeviceDelegate } from "./base";
 export class ShellyPlus2PmDelegate extends DeviceDelegate {
   protected setup() {
     const d = this.device as ShellyPlus2Pm;
-    const isCover = d.profile === "cover";
+    const isCover = d.profile === 'cover';
 
     this.addCover(d.cover0, { active: isCover });
 
@@ -21,5 +21,5 @@ DeviceDelegate.registerDelegate(
   ShellyPlus2PmDelegate,
   ShellyPlus2Pm,
   ShellyPlus2PmRev1,
-  ShellyGen32Pm
+  ShellyGen32Pm,
 );

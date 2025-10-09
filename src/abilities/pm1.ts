@@ -3,9 +3,9 @@ import {
   CharacteristicValue as ShelliesCharacteristicValue,
   Pm1,
   Pm1AenergyStatus,
-} from "shellies-ds9";
+} from 'shellies-ds9';
 
-import { Ability, ServiceClass } from "./base";
+import { Ability, ServiceClass } from './base';
 
 /**
  * This ability sets up a custom service that reports power meter readings.
@@ -32,13 +32,13 @@ export class Pm1Ability extends Ability {
     // set the initial value
     s.setCharacteristic(this.Characteristic.On, false);
 
-    cPm1.on("change:apower", this.apowerChangeHandler, this);
+    cPm1.on('change:apower', this.apowerChangeHandler, this);
 
     // setup Voltage
     if (cPm1.voltage !== undefined) {
       s.setCharacteristic(cc.Voltage, cPm1.voltage);
 
-      cPm1.on("change:voltage", this.voltageChangeHandler, this);
+      cPm1.on('change:voltage', this.voltageChangeHandler, this);
     } else {
       this.removeCharacteristic(cc.Voltage);
     }
@@ -47,7 +47,7 @@ export class Pm1Ability extends Ability {
     if (cPm1.current !== undefined) {
       s.setCharacteristic(cc.ElectricCurrent, cPm1.current);
 
-      cPm1.on("change:current", this.currentChangeHandler, this);
+      cPm1.on('change:current', this.currentChangeHandler, this);
     } else {
       this.removeCharacteristic(cc.ElectricCurrent);
     }
@@ -56,7 +56,7 @@ export class Pm1Ability extends Ability {
     if (cPm1.aenergy !== undefined) {
       s.setCharacteristic(cc.TotalConsumption, cPm1.aenergy.total / 1000);
 
-      cPm1.on("change:aenergy", this.aenergyChangeHandler, this);
+      cPm1.on('change:aenergy', this.aenergyChangeHandler, this);
     } else {
       this.removeCharacteristic(cc.TotalConsumption);
     }
@@ -64,10 +64,10 @@ export class Pm1Ability extends Ability {
 
   detach() {
     this.componentPm1
-      .off("change:apower", this.apowerChangeHandler, this)
-      .off("change:voltage", this.voltageChangeHandler, this)
-      .off("change:current", this.currentChangeHandler, this)
-      .off("change:aenergy", this.aenergyChangeHandler, this);
+      .off('change:apower', this.apowerChangeHandler, this)
+      .off('change:voltage', this.voltageChangeHandler, this)
+      .off('change:current', this.currentChangeHandler, this)
+      .off('change:aenergy', this.aenergyChangeHandler, this);
   }
 
   /**
@@ -76,10 +76,10 @@ export class Pm1Ability extends Ability {
   protected apowerChangeHandler(value: ShelliesCharacteristicValue) {
     this.service.updateCharacteristic(
       this.customCharacteristics.CurrentConsumption,
-      value as number
+      value as number,
     );
     // set status
-    if (typeof value === "number") {
+    if (typeof value === 'number') {
       //value is definitely a number and not null
       if (value >= 1) {
         //this.log.info('Switch Status('+this.component.id+'): on');
@@ -97,7 +97,7 @@ export class Pm1Ability extends Ability {
   protected voltageChangeHandler(value: ShelliesCharacteristicValue) {
     this.service.updateCharacteristic(
       this.customCharacteristics.Voltage,
-      value as number
+      value as number,
     );
   }
 
@@ -107,7 +107,7 @@ export class Pm1Ability extends Ability {
   protected currentChangeHandler(value: ShelliesCharacteristicValue) {
     this.service.updateCharacteristic(
       this.customCharacteristics.ElectricCurrent,
-      value as number
+      value as number,
     );
   }
 
@@ -119,7 +119,7 @@ export class Pm1Ability extends Ability {
 
     this.service.updateCharacteristic(
       this.customCharacteristics.TotalConsumption,
-      attr.total / 1000
+      attr.total / 1000,
     );
   }
 }

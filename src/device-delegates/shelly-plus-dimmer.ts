@@ -1,6 +1,6 @@
-import { ShellyPlusDimmer } from "shellies-ds9";
+import { ShellyPlusDimmer } from 'shellies-ds9';
 
-import { DeviceDelegate } from "./base";
+import { DeviceDelegate } from './base';
 
 /**
  * Handles Shelly Pro Dimmer 1PM devices.

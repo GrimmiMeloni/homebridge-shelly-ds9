@@ -269,6 +269,13 @@ export abstract class DeviceDelegate {
   protected handleConnect() {
     this.log.info('Device connected');
     this.connected = true;
+
+    // refresh state on all abilities to ensure HomeKit has the latest values
+    for (const accessory of this.accessories.values()) {
+      for (const ability of accessory.abilities) {
+        ability.refreshState();
+      }
+    }
   }
 
   /**

@@ -3,9 +3,9 @@ import {
   ShellyPlusPlugEu,
   ShellyPlusPlugIt,
   ShellyPlusPlugUk,
-} from "shellies-ds9";
+} from 'shellies-ds9';
 
-import { DeviceDelegate } from "./base";
+import { DeviceDelegate } from './base';
 
 /**
  * Handles Shelly Plus Plug US devices.
@@ -23,5 +23,5 @@ DeviceDelegate.registerDelegate(
   ShellyPlusPlugUs,
   ShellyPlusPlugEu,
   ShellyPlusPlugIt,
-  ShellyPlusPlugUk
+  ShellyPlusPlugUk,
 );

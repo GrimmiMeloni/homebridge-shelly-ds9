@@ -1,6 +1,6 @@
-import { API, Service, WithUUID } from "homebridge";
+import { API, Service, WithUUID } from 'homebridge';
 
-import { CustomCharacteristics } from "./characteristics";
+import { CustomCharacteristics } from './characteristics';
 
 type S = WithUUID<typeof Service>;
 
@@ -16,13 +16,13 @@ export interface CustomServices {
  */
 export const createServices = (
   api: API,
-  characteristics: CustomCharacteristics
+  characteristics: CustomCharacteristics,
 ): CustomServices => {
   /**
    * Reports power meter readings.
    */
   class PowerMeter extends api.hap.Service {
-    static readonly UUID = "DEDBEA44-11ED-429C-BD75-9A2286AA8707";
+    static readonly UUID = 'DEDBEA44-11ED-429C-BD75-9A2286AA8707';
 
     constructor(displayName?: string, subtype?: string) {
       super(displayName, PowerMeter.UUID, subtype);
@@ -38,7 +38,7 @@ export const createServices = (
    * Reports Pm1 readings.
    */
   class Pm1 extends api.hap.Service {
-    static readonly UUID = "DEDBEA44-11ED-429C-BD75-9A2286AA8707";
+    static readonly UUID = 'DEDBEA44-11ED-429C-BD75-9A2286AA8707';
 
     constructor(displayName?: string, subtype?: string) {
       super(displayName, Pm1.UUID, subtype);
