@@ -20,6 +20,10 @@ import { CustomServices, createServices } from './utils/services';
 import { DeviceCache } from './utils/device-cache';
 import { DeviceDelegate } from './device-delegates';
 import { PlatformOptions } from './config';
+import { ShellyPlusRGBWPM } from './custom-devices';
+
+// Import all device delegates to ensure they are registered
+import './device-delegates';
 
 type AccessoryUuid = string;
 
@@ -167,6 +171,9 @@ export class ShellyPlatform implements DynamicPlatformPlugin {
 
     this.customCharacteristics = Object.freeze(createCharacteristics(api));
     this.customServices = Object.freeze(createServices(api, this.customCharacteristics));
+
+    // register custom device classes that are not yet supported in shellies-ds9
+    Device.registerClass(ShellyPlusRGBWPM);
 
     // setup shellies-ds9
     this.shellies = new Shellies({
