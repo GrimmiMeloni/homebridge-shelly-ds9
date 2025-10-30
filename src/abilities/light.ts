@@ -28,9 +28,11 @@ export class LightAbility extends Ability {
 
     // listen for commands from HomeKit
     this.service.getCharacteristic(this.Characteristic.On)
-      .onSet(this.onSetHandler.bind(this));
+      .onSet(this.onSetHandler.bind(this))
+      .onGet(this.onGetHandler.bind(this));
     this.service.getCharacteristic(this.Characteristic.Brightness)
-      .onSet(this.brightnessSetHandler.bind(this));
+      .onSet(this.brightnessSetHandler.bind(this))
+      .onGet(this.brightnessGetHandler.bind(this));
 
     // listen for updates from the device
     this.component.on('change:output', this.outputChangeHandler, this);
@@ -59,6 +61,13 @@ export class LightAbility extends Ability {
       );
       throw this.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE;
     }
+  }
+
+  /**
+   * Handles requests for the current value of the Light.On characteristic.
+   */
+  protected onGetHandler(): CharacteristicValue {
+    return this.component.output;
   }
 
   /**
@@ -91,6 +100,13 @@ export class LightAbility extends Ability {
       );
       throw this.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE;
     }
+  }
+
+  /**
+   * Handles requests for the current value of the Light.Brightness characteristic.
+   */
+  protected brightnessGetHandler(): CharacteristicValue {
+    return this.component.brightness;
   }
 
   /**
