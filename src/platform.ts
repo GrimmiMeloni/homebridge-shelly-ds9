@@ -437,6 +437,19 @@ export class ShellyPlatform implements DynamicPlatformPlugin {
    * Handles 'error' events from the shellies-ds9 library.
    */
   protected handleError(deviceId: DeviceId, error: Error) {
+    // When a Shelly device advertises itself via mDNS using its user-assigned name
+    // (e.g. "Shelly-Büro") but Shelly.GetDeviceInfo returns a hardware-based ID
+    // (e.g. "shellyplus2pm-<mac>"), the library reports an ID mismatch error.
+    // If we already know the device by its hardware ID, this is harmless noise —
+    // the device is connected and the mDNS name is simply stale.
+    const match = error.message.match(/Unexpected device ID \(returned: ([^,]+), expected:/);
+    if (match !== null && this.deviceDelegates.has(match[1])) {
+      this.log.debug(
+        `[${deviceId}] mDNS name does not match hardware device ID (${match[1]}); device is already connected`,
+      );
+      return;
+    }
+
     // print the error to the log
     this.log.error(error.message);
     this.log.debug(error.stack || '');

@@ -285,6 +285,16 @@ export abstract class DeviceDelegate {
     const details = reason.length > 0 ? 'reason: ' + reason : 'code: ' + code;
     this.log.warn((this.connected ? 'Device disconnected' : 'Connection failed') + ' (' + details + ')');
 
+    // Shelly devices send 'Bye' with close code 1000 when they are about to reboot.
+    // The library skips auto-reconnect for code 1000 (treating it as an intentional
+    // disconnect), but we should reconnect because the device will come back online.
+    if (reconnectIn === null && reason === 'Bye') {
+      // scheduleConnect() is protected on WebSocketRpcHandler and not in the public
+      // type interface, so we access it through a minimal structural type.
+      const reconnectable = this.device.rpcHandler as unknown as { scheduleConnect(): number | null };
+      reconnectIn = reconnectable.scheduleConnect();
+    }
+
     if (reconnectIn !== null) {
       let msg = 'Reconnecting in ';
 
