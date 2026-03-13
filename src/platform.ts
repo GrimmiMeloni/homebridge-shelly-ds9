@@ -78,6 +78,18 @@ export class ConfigDeviceDiscoverer extends DeviceDiscoverer {
 }
 
 /**
+ * Utility class that retries discovery of devices that previously failed.
+ */
+export class RetryDeviceDiscoverer extends DeviceDiscoverer {
+  /**
+   * Triggers re-discovery of a device.
+   */
+  retryDevice(identifiers: DeviceIdentifiers) {
+    this.handleDiscoveredDevice(identifiers);
+  }
+}
+
+/**
  * Utility class that "discovers" devices from a cache.
  */
 export class CacheDeviceDiscoverer extends DeviceDiscoverer {
@@ -154,6 +166,26 @@ export class ShellyPlatform implements DynamicPlatformPlugin {
    * Holds all device delegates.
    */
   readonly deviceDelegates: Map<DeviceId, DeviceDelegate> = new Map();
+
+  /**
+   * A discoverer used to retry failed device discoveries.
+   */
+  protected retryDiscoverer: RetryDeviceDiscoverer | null = null;
+
+  /**
+   * Tracks pending discovery retry timers and attempt counts per device.
+   */
+  protected readonly discoveryRetryTimers: Map<DeviceId, { timer: ReturnType<typeof setTimeout>; attempts: number }> = new Map();
+
+  /**
+   * Retry intervals in seconds for failed device discoveries.
+   */
+  protected static readonly DISCOVERY_RETRY_INTERVALS = [30, 60, 120, 300];
+
+  /**
+   * Maximum number of discovery retry attempts.
+   */
+  protected static readonly MAX_DISCOVERY_RETRIES = ShellyPlatform.DISCOVERY_RETRY_INTERVALS.length;
 
   /**
    * This constructor is invoked by homebridge.
@@ -268,6 +300,10 @@ export class ShellyPlatform implements DynamicPlatformPlugin {
         : `Loaded ${this.accessories.size} accessories from cache`,
     );
 
+    // create and register the retry discoverer
+    this.retryDiscoverer = new RetryDeviceDiscoverer();
+    this.shellies.registerDiscoverer(this.retryDiscoverer);
+
     await this.runConfigDeviceDiscoverer();
 
     // load cached devices
@@ -345,6 +381,13 @@ export class ShellyPlatform implements DynamicPlatformPlugin {
    * Handles 'add' events from the shellies-ds9 library.
    */
   protected async handleAddedDevice(device: Device) {
+    // cancel any pending discovery retry for this device
+    const pendingRetry = this.discoveryRetryTimers.get(device.id);
+    if (pendingRetry) {
+      clearTimeout(pendingRetry.timer);
+      this.discoveryRetryTimers.delete(device.id);
+    }
+
     // make sure this device hasn't already been added
     if (this.deviceDelegates.has(device.id)) {
       this.log.error(`Device with ID ${device.id} has already been added`);
@@ -450,8 +493,98 @@ export class ShellyPlatform implements DynamicPlatformPlugin {
       return;
     }
 
+    // Handle failed device discovery (e.g. "Request timeout", connection errors).
+    // When mDNS re-discovers a device that recently disconnected, the library opens
+    // a new WebSocket and calls Shelly.GetDeviceInfo. If that times out (e.g. because
+    // the device's limited WebSocket slots are occupied by a stale connection), the
+    // device is left without a delegate and never recovers.
+    const discoveryMatch = error.message.match(/Failed to add discovered device \(id: ([^)]+)\): (.+)/);
+    if (discoveryMatch !== null) {
+      const failedDeviceId = discoveryMatch[1];
+      const reason = discoveryMatch[2];
+
+      // If the device already has a working delegate, this error is harmless
+      if (this.deviceDelegates.has(failedDeviceId)) {
+        this.log.debug(
+          `[${failedDeviceId}] Discovery failed (${reason}) but device is already connected`,
+        );
+        return;
+      }
+
+      // If the library already tracks this device (e.g. connected under same ID),
+      // no action is needed
+      if (this.shellies.has(failedDeviceId)) {
+        this.log.debug(
+          `[${failedDeviceId}] Discovery failed (${reason}) but device is already known`,
+        );
+        return;
+      }
+
+      this.log.warn(
+        `[${failedDeviceId}] Discovery failed (${reason})`,
+      );
+
+      this.scheduleDiscoveryRetry(failedDeviceId);
+      return;
+    }
+
     // print the error to the log
     this.log.error(error.message);
     this.log.debug(error.stack || '');
+  }
+
+  /**
+   * Schedules a retry for a failed device discovery using cached device info.
+   */
+  protected scheduleDiscoveryRetry(deviceId: DeviceId) {
+    // look up the device in cache to get its hostname
+    const cached = this.deviceCache.get(deviceId);
+    if (!cached || !cached.hostname) {
+      this.log.debug(`[${deviceId}] No cached hostname available for discovery retry`);
+      return;
+    }
+
+    // get current retry state
+    const existing = this.discoveryRetryTimers.get(deviceId);
+    const attempts = existing ? existing.attempts : 0;
+
+    // clear any existing timer
+    if (existing) {
+      clearTimeout(existing.timer);
+    }
+
+    // check if we've exhausted retries
+    if (attempts >= ShellyPlatform.MAX_DISCOVERY_RETRIES) {
+      this.log.warn(
+        `[${deviceId}] Giving up discovery retry after ${attempts} failed attempt(s)`,
+      );
+      this.discoveryRetryTimers.delete(deviceId);
+      return;
+    }
+
+    const delay = ShellyPlatform.DISCOVERY_RETRY_INTERVALS[attempts];
+
+    this.log.info(
+      `[${deviceId}] Scheduling discovery retry in ${delay} second(s) (attempt ${attempts + 1}/${ShellyPlatform.MAX_DISCOVERY_RETRIES})`,
+    );
+
+    const timer = setTimeout(() => {
+      this.discoveryRetryTimers.delete(deviceId);
+
+      // if the device was added in the meantime, skip
+      if (this.deviceDelegates.has(deviceId) || this.shellies.has(deviceId)) {
+        this.log.debug(`[${deviceId}] Device recovered before retry; skipping`);
+        return;
+      }
+
+      this.log.info(`[${deviceId}] Retrying device discovery (attempt ${attempts + 1})`);
+
+      this.retryDiscoverer?.retryDevice({
+        deviceId: cached.id,
+        hostname: cached.hostname,
+      });
+    }, delay * 1000);
+
+    this.discoveryRetryTimers.set(deviceId, { timer, attempts: attempts + 1 });
   }
 }
